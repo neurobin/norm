@@ -2,21 +2,37 @@
 
 class DB{
     protected static $pdo_instance;
-    protected $pdo;
+    protected static $pdo;
 
     public function __construct() {
-
+        throw Exception("ERROR: ".__CLASS__." does not allow object instantiation.");
     }
 
-    public function __clone(){}
+    public function __clone(){
+        throw Exception("ERROR: ".__CLASS__." does not allow object copy.");
+    }
 
-    public static function err($msg){
+    public static function create_error_message($msg, $scope, $prefix="ERROR:"){
+        return $prefix.$scope.$msg;
+    }
+
+    public static function errlog($msg){
         $err_file = fopen('php://stderr', 'w');
-        fwrite($err_file, "ERROR:".__METHOD__.": $msg");
+        fwrite($err_file, self::create_error_message($msg, __NAMESPACE__.__CLASS__));
     }
 
     public static function close(){
         self::$pdo_instance = null;
+    }
+
+    public static function ping(){
+        try{
+            self::$pdo_instance->query('SELECT 1');
+            return TRUE;
+        }catch(Exception $e){
+            self::$errlog($e->getMessage());
+            return FALSE;
+        }
     }
 
     public static function create_new_pdo($opt=[]){
@@ -29,13 +45,21 @@ class DB{
         }
 
         $dsn = DB_DRIVER.':host='.DB_HOST.';dbname='.DB_NAME.';charset='.DB_CHARSET;
+        self::close();
         try{
-            $this->pdo = new PDO($dsn, DB_USER, DB_PASSWORD, $opt);
+            self::$pdo_instance = new PDO($dsn, DB_USER, DB_PASSWORD, $opt);
             return TRUE;
         }catch (Exception $e){
-            self::err($e->getMessage());
+            self::errlog($e->getMessage());
             return FALSE;
         }
+    }
+
+    public static function get_instance(){
+        if(self::$pdo_instance === null || !self::ping()){
+            self::create_new_pdo();
+        }
+        return self::$pdo_instance;
     }
 
     // a proxy to native PDO methods
