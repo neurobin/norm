@@ -1,0 +1,13 @@
+{
+    "name": "neurobin/norm",
+    "description": "Database utils",
+    "type": "library",
+    "license": "BSD",
+    "authors": [
+        {
+            "name": "Md Jahidul Hamid",
+            "email": "jahidulhamid@yahoo.com"
+        }
+    ],
+    "require": {}
+}
