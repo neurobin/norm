@@ -1,0 +1,1 @@
+{"table_name":"Users","properties":{"id":"INT PRIMARY KEY AUTO_INCREMENT","username":"varchar(50)","aaa":"varchar(66)"}}

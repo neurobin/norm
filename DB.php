@@ -2,7 +2,7 @@
 
 class DB{
     protected static $pdo_instance;
-    protected static $pdo;
+    public static $throw_connection_exception = true;
 
     public function __construct() {
         throw Exception("ERROR: ".__CLASS__." does not allow object instantiation.");
@@ -35,9 +35,14 @@ class DB{
         }
     }
 
-    public static function create_new_pdo($opt=[]){
-        if(empty($opt)){
-            $opt = array(
+    public static function create_new_pdo($options=[]){
+        /*
+        * On success: Returns True.
+        * On failure: Throws exception if fails and if self::$throw_connection_exception
+                      is true [default]. Otherwise returns False.
+        */
+        if(empty($options)){
+            $options = array(
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 // PDO::ATTR_EMULATE_PREPARES   => FALSE,
@@ -47,10 +52,13 @@ class DB{
         $dsn = DB_DRIVER.':host='.DB_HOST.';dbname='.DB_NAME.';charset='.DB_CHARSET;
         self::close();
         try{
-            self::$pdo_instance = new PDO($dsn, DB_USER, DB_PASSWORD, $opt);
+            self::$pdo_instance = new PDO($dsn, DB_USER, DB_PASSWORD, $options);
             return TRUE;
         }catch (Exception $e){
             self::errlog($e->getMessage());
+            if(self::$throw_connection_exception){
+                throw new PDOException($e->getMessage());
+            }
             return FALSE;
         }
     }
@@ -62,21 +70,16 @@ class DB{
         return self::$pdo_instance;
     }
 
-    // a proxy to native PDO methods
-    public function __call($method, $args)
-    {
-        return call_user_func_array(array($this->pdo, $method), $args);
+    public static function __callStatic($method, $args){
+        return call_user_func_array(array(self::get_instance(), $method), $args);
     }
 
-    // a helper function to run prepared statements smoothly
-    public function run($sql, $args = [])
-    {
-        if (!$args)
-        {
-             return $this->query($sql);
+    public static function mquery($sql, $args = []){
+        if(!$args){
+             return self::query($sql);
         }
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($args);
-        return $stmt;
+        $qobj = self::prepare($sql);
+        $qobj->execute($args);
+        return $qobj;
     }
 }
