@@ -232,7 +232,7 @@ abstract class Model{
         $table_name = static::get_table_name();
         if($op['op'] == 'rename'){
             self::display("> RENAME: {$op['pre_key']} --> {$op['cur_key']} {$op['cur_val']}");
-            $sql = "ALTER TABLE $table_name CHANGE COLUMN {$op['pre_key']} TO {$op['cur_key']} {$op['cur_val']};";
+            $sql = "ALTER TABLE $table_name CHANGE COLUMN {$op['pre_key']} {$op['cur_key']} {$op['cur_val']};";
         }elseif($op['op'] == 'mod'){
             self::display("> MODIFY: {$op['cur_key']}: {$op['pre_val']} --> {$op['cur_val']}");
             $sql = "ALTER TABLE $table_name MODIFY {$op['cur_key']} {$op['cur_val']};";
@@ -288,7 +288,7 @@ class Users extends Model{
     public $username = 'varchar(260)';
     public $aaa = 'varchar(636)';
     public $dfd = 'varchar(37)';
-    public $df4 = 'varchar(77)';
+    public $dfc = 'varchar(77)';
 
 }
 
