@@ -92,8 +92,8 @@ class DB{
         return $qobj;
     }
 
-    public static function insert_assoc($assoc, $table){
-        $sql = "insert into $table (";
+    public static function insert_assoc($table, &$assoc, $pk=''){
+        $sql = "INSERT INTO $table (";
         $nq = '';
         $vq = '';
         $values = [];
@@ -104,12 +104,16 @@ class DB{
         }
         $nq = trim($nq, ',');
         $vq = trim($vq, ',');
-        $sql .= "$nq) values ($vq)";
-        self::mquery($sql, $values);
+        $sql .= "$nq) VALUES ($vq)";
+        $res = self::mquery($sql, $values);
+        if(!empty($pk)){
+            $assoc[$pk] = self::get_instance()->lastInsertId();
+        }
+        return $res;
     }
 
-    public static function update_assoc($assoc, $table, $where='where ?', $where_values=[0]){
-        $sql = "update $table set ";
+    public static function update_assoc($table, $assoc, $where='?', $where_values=[0]){
+        $sql = "UPDATE $table SET ";
         $nq = '';
         $values = [];
         foreach($assoc as $n=>$v){
@@ -117,8 +121,13 @@ class DB{
             $values[] = $v;
         }
         $nq = trim($nq, ',');
-        $sql .= "$nq $where";
+        $sql .= "$nq WHERE $where";
         $values = array_merge($values, $where_values);
-        self::mquery($sql, $values);
+        return self::mquery($sql, $values);
+    }
+
+    public static function delete_where($table, $where='?', $where_values=[0]){
+        $sql = "DELETE FROM $table WHERE $where";
+        return self::mquery($sql, $where_values);
     }
 }

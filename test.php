@@ -297,51 +297,76 @@ abstract class _Model_{
     }
 
     public static function _select($where='1', $where_values=[], $options=array()){
-        $sql = "select * from ".static::_get_table_name_()." where $where";
+        $sql = "SELECT * FROM ".static::_get_table_name_()." WHERE $where";
         $stmt = DB::mquery($sql, $where_values, $options);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
     }
 
-    public function _assoc(){
+    public function _get_property_value_($n){
+        if(isset($this->$n)){
+            $v = $this->$n;
+        }else{
+            $default_var_name = self::$default_prefix.$n;
+            if(method_exists($this, $default_var_name)){
+                $v = call_user_func_array(array($this, $default_var_name), []);
+            }elseif(isset($this->$default_var_name)){
+                $v = $this->$default_var_name;
+            }elseif(isset(static::$$default_var_name)){
+                $v = static::$$default_var_name;
+            }else{
+                $v = NULL;
+            }
+        }
+        return $v;
+    }
+
+    public function _assoc($exclude_values=[], $exclude_keys=[], $strict=TRUE){
         $this_props = get_object_vars($this);
         $all_props = static::_get_properties_();
         $props = array();
         foreach($all_props as $n=>$v){
-            if(isset($this->$n)){
-                $v = $this->$n;
-            }else{
-                $default_var_name = self::$default_prefix.$n;
-                if(method_exists($this, $default_var_name)){
-                    $v = call_user_func_array(array($this, $default_var_name), []);
-                }elseif(isset($this->$default_var_name)){
-                    $v = $this->$default_var_name;
-                }elseif(isset(static::$$default_var_name)){
-                    $v = static::$$default_var_name;
-                }else{
-                    $v = NULL;
-                }
-            }
+            if(in_array($n, $exclude_keys, $strict)) continue;
+            $v = $this->_get_property_value_($n);
+            if(in_array($v, $exclude_values, $strict)) continue;
             $props[$n] = $v;
         }
         return $props;
     }
 
-    public function _insert(){
-        $data = $this->_assoc();
-        unset($data[static::$_pk_]);
-        var_dump($data);
-        DB::insert_assoc($data, static::_get_table_name_());
+    public function _insert($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        $pk = static::$_pk_;
+        $data = $this->_assoc($exclude_values, $exclude_keys, $strict);
+        if($data[$pk] !== NULL){
+            throw new Exception("Can not insert, item exists: ". print_r($data, true));
+        }
+        unset($data[$pk]);
+        DB::insert_assoc(static::_get_table_name_(), $data, $pk);
+        $this->$pk = $data[$pk];
     }
 
-    public function _update(){
-        $data = $this->_assoc();
-        $pkv = $data[static::$_pk_];
-        $where = "where ".static::$_pk_."=?";
+    public function _update($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        $pk = static::$_pk_;
+        if(!isset($this->$pk) || $this->$pk === NULL){
+            throw new Exception("Can not update, item does not exist: ". print_r($this, true));
+        }
+        $pkv = $this->$pk; //pk must be available, thus we can access it directly.
+        $data = $this->_assoc($exclude_values=[], $exclude_keys=[], $strict);
+        unset($data[$pk]);
+        $where = "$pk=?";
         $where_values = [$pkv];
-        unset($data[static::$_pk_]);
-        var_dump($data);
-        DB::update_assoc($data, static::_get_table_name_(), $where, $where_values);
+        DB::update_assoc(static::_get_table_name_(), $data, $where, $where_values);
+    }
+
+    public function _delete(){
+        $pk = static::$_pk_;
+        if(!isset($this->$pk) || $this->$pk === NULL){
+            throw new Exception("Can not delete, item does not exist: ". print_r($this, true));
+        }
+        $pkv = $this->$pk; //pk must be available, thus we can access it directly.
+        $where = "$pk=?";
+        $where_values = [$pkv];
+        DB::delete_where(static::_get_table_name_(), $where, $where_values);
     }
 }
 
@@ -386,10 +411,13 @@ class Users extends Model{
 $u = new Users();
 
 $u->aaa = 'fdsfsdfd';
+$u->_insert();
+$u->dfd = "some";
+$u->_update();
 
 // var_dump(Users::_get_table_name_());
 // var_dump($u->_get_table_name_());
-var_dump(Users::_get_properties_());
+// var_dump(Users::_get_properties_());
 
 // var_dump(Users::_get_sql_create_());
 // Users::_drop_();
@@ -409,7 +437,10 @@ $stmt = Users::_select();
 while($user=$stmt->fetch()){
     var_dump($user);
     $user->aaa = "fdsfdsfdsfdf";
+    // $user->_insert();
     $user->_update();
+    // $user->_delete();
+
     break;
 }
 
