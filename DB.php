@@ -91,4 +91,20 @@ class DB{
         $qobj->execute($args);
         return $qobj;
     }
+
+    public static function insert_assoc($assoc, $table){
+        $sql = "insert into $table (";
+        $nq = '';
+        $vq = '';
+        $values = [];
+        foreach($assoc as $n=>$v){
+            $nq .= "$n,";
+            $vq .= "?,";
+            $values[] = $v;
+        }
+        $nq = trim($nq, ',');
+        $vq = trim($vq, ',');
+        $sql .= "$nq) values ($vq)";
+        self::mquery($sql, $values);
+    }
 }

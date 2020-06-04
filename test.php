@@ -16,11 +16,14 @@ var_dump($d);
 class TableNotCreatedException extends Exception{}
 
 abstract class _Model_{
+    private static $column_prefix = '_col_';
+    private static $default_prefix = '_dfl_';
+
     public static $_migration_index_length_ = 6;
     public static $_migration_base_dir_ = __DIR__.'/migrations';
 
     public static function _make_query_($sql){
-        return DB::get_instance()->_make_query_($sql);
+        return DB::get_instance()->query($sql);
     }
 
     public static function _get_table_name_(){
@@ -98,13 +101,19 @@ abstract class _Model_{
         $class = static::class;
         $chain = array_reverse(class_parents($class), true) + [$class => $class];
         $props = [];
+        $plength = strlen(self::$column_prefix);
         foreach($chain as $class){
             $cprops = (new ReflectionClass($class))->getDefaultProperties();
             foreach($cprops as $name => $prop){
-                if($name[0] == '_') continue;
-                $props[$name] = $prop;
+                $prefix = substr($name, 0, $plength);
+                $suffix = substr($name, $plength);
+                if($prefix === self::$column_prefix){
+                    if($suffix[0] == '_'){
+                        throw new Exception("We do not allow column name starting with underscore (_): $suffix");
+                    }
+                    $props[$suffix] = $prop;
+                }
             }
-            // $props += $prop;
         }
         return $props;
     }
@@ -287,15 +296,42 @@ abstract class _Model_{
         }
     }
 
-    public static function _get($where='1', $args=[], $options=array()){
+    public static function _select($where='1', $args=[], $options=array()){
         $sql = "select * from ".static::_get_table_name_()." where $where";
         $stmt = DB::mquery($sql, $args, $options);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
     }
 
-    public function _insert_(){
+    public function _assoc(){
+        $this_props = get_object_vars($this);
+        $all_props = static::_get_properties_();
+        $props = array();
+        foreach($all_props as $n=>$v){
+            if(isset($this->$n)){
+                $v = $this->$n;
+            }else{
+                $default_var_name = self::$default_prefix.$n;
+                if(method_exists($this, $default_var_name)){
+                    $v = call_user_func_array(array($this, $default_var_name), []);
+                }elseif(isset($this->$default_var_name)){
+                    $v = $this->$default_var_name;
+                }elseif(isset(static::$$default_var_name)){
+                    $v = static::$$default_var_name;
+                }else{
+                    $v = NULL;
+                }
+            }
+            $props[$n] = $v;
+        }
+        return $props;
+    }
 
+    public function _insert(){
+        $data = $this->_assoc();
+        unset($data[static::$_pk_]);
+        var_dump($data);
+        DB::insert_assoc($data, static::_get_table_name_());
     }
 }
 
@@ -315,37 +351,47 @@ abstract class Model extends _Model_{
      * sql definition of this column.
      * */
 
-    public static $id = 'INT PRIMARY KEY AUTO_INCREMENT';
+    public static $_col_id = 'INT PRIMARY KEY AUTO_INCREMENT';
     public static $_pk_ = 'id';
 }
 
 
 class Users extends Model{
+    // TODO: only non static properties should be allowed
 
-    public $username = 'varchar(262)';
-    public $aaa = 'varchar(635)';
-    public $dfd = 'varchar(37)';
-    public $dfc = 'varchar(77)';
-    public $query = 'varchar(34)';
+    public static $_col_username = 'varchar(262)';
+    public static $_dfl_username = 'John Doe';
 
+    // public static $_col_aaa = 'varchar(635)';
+    // public static $_col_dfd = 'varchar(37)';
+    // public static $_col_dfc = 'varchar(77)';
+    // public static $_col_query = 'varchar(34)';
+
+    public static function _dfl_query(){
+        return 'Something';
+    }
 }
 
 
 $u = new Users();
 
+$u->aaa = 'fdsfsdfd';
+
 // var_dump(Users::_get_table_name_());
 // var_dump($u->_get_table_name_());
-// var_dump(Users::_get_properties_());
+var_dump(Users::_get_properties_());
 
 // var_dump(Users::_get_sql_create_());
 // Users::_drop_();
 // Users::_create_();
+Users::_change_or_create_();
 // var_dump(Users::_get_sql_schema_('username'));
 // var_dump(Users::_get_schema_('username'));
 
 // var_dump(Users::_get_migration_current_filename_(''));
 
 // var_dump(Users::_get_sql_change_());
-// Users::_change_or_create_();
+// var_dump($u->_get_assoc());
+$u->_insert();
 
-Users::_make_query_("select *");
+// Users::_make_query_("select *");
