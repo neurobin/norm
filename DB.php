@@ -1,6 +1,15 @@
 <?php
 
 class DB{
+    /* *
+     * Required constants:
+     *  DB_DRIVER   mysql, pgsql etc..
+     *  DB_HOST     e.g localhost or 127.0.0.1
+     *  DB_NAME     database name
+     *  DB_CHARSET  e.g utf8
+     *  DB_USER     username
+     *  DB_PASSWORD password
+     * */
     protected static $pdo_instance;
     public static $throw_connection_exception = true;
 
@@ -30,7 +39,7 @@ class DB{
             self::$pdo_instance->query('SELECT 1');
             return TRUE;
         }catch(Exception $e){
-            self::$errlog($e->getMessage());
+            // self::$errlog($e->getMessage());
             return FALSE;
         }
     }
@@ -74,11 +83,11 @@ class DB{
         return call_user_func_array(array(self::get_instance(), $method), $args);
     }
 
-    public static function mquery($sql, $args = []){
+    public static function mquery($sql, $args = [], $options=array()){
         if(!$args){
              return self::query($sql);
         }
-        $qobj = self::prepare($sql);
+        $qobj = self::prepare($sql, $options);
         $qobj->execute($args);
         return $qobj;
     }

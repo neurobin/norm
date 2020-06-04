@@ -13,28 +13,27 @@ $d = DB::mquery("SHOW TABLES;");
 
 var_dump($d);
 
-abstract class Model{
+class TableNotCreatedException extends Exception{}
 
-    public static $_migration_index_length = 6;
-    public static $_migration_base_dir = __DIR__.'/migrations';
+abstract class _Model_{
+    public static $_migration_index_length_ = 6;
+    public static $_migration_base_dir_ = __DIR__.'/migrations';
 
-    public static $id = 'INT PRIMARY KEY AUTO_INCREMENT';
-
-    public static function make_query($sql){
-        return DB::get_instance()->query($sql);
+    public static function _make_query_($sql){
+        return DB::get_instance()->_make_query_($sql);
     }
 
-    public static function get_table_name(){
+    public static function _get_table_name_(){
         return static::class;
     }
 
-    public static function _get_migration_dir(){
-        return static::$_migration_base_dir."/".static::get_table_name();
+    public static function _get_migration_dir_(){
+        return static::$_migration_base_dir_."/".static::_get_table_name_();
     }
 
-    public static function _get_migration_previous_file(){
-        $table_name = static::get_table_name();
-        $dir = static::_get_migration_dir();
+    public static function _get_migration_previous_file_(){ # no override
+        $table_name = static::_get_table_name_();
+        $dir = static::_get_migration_dir_();
         if(!is_dir($dir)){
             mkdir($dir, 0755, true);
         }
@@ -44,7 +43,7 @@ abstract class Model{
         return $file;
     }
 
-    public static function _get_migration_current_filename($previous_filename){
+    public static function _get_migration_current_filename_($previous_filename){ # no override
         $m = preg_match('/0*(\d+)[\D]*$/s', $previous_filename, $matches);
         if($m){
             $number = (int)$matches[1] + 1;
@@ -52,7 +51,7 @@ abstract class Model{
             $number = 1;
         }
         $n = strlen("$number");
-        $l = static::$_migration_index_length-$n;
+        $l = static::$_migration_index_length_-$n;
         $new_number = '';
         for($i=0;$i<$l;$i++){
             $new_number .= '0';
@@ -61,25 +60,25 @@ abstract class Model{
         if($m){
             $new_filename = preg_replace('/(\d+)([\D]*)$/s', "$new_number$2", $previous_filename);
         }else{
-            $new_filename = static::get_table_name()."_$new_number.json";
+            $new_filename = static::_get_table_name_()."_$new_number.json";
         }
         return $new_filename;
     }
 
-    public static function _get_migration_current_file($filename){
-        return static::_get_migration_dir()."/". $filename;
+    public static function _get_migration_current_file($filename){ # no override
+        return static::_get_migration_dir_()."/". $filename;
     }
 
-    public static function _save_migration_current($json){
-        $prev_file = static::_get_migration_previous_file();
-        $new_filename = static::_get_migration_current_filename(basename($prev_file));
-        $new_file = static::_get_migration_current_file($new_filename);
+    public static function _save_migration_current_($json){ # no override
+        $prev_file = self::_get_migration_previous_file_();
+        $new_filename = self::_get_migration_current_filename_(basename($prev_file));
+        $new_file = self::_get_migration_current_file($new_filename);
         file_put_contents($new_file, json_encode($json));
     }
 
-    public static function _get_migration_previous_json(){
+    public static function _get_migration_previous_json_(){ # no override
         //null means no previous migration files.
-        $filename = static::_get_migration_previous_file();
+        $filename = self::_get_migration_previous_file_();
         if(empty($filename)){
             return null;
         }else{
@@ -88,14 +87,14 @@ abstract class Model{
         }
     }
 
-    public static function _get_migration_default_json(){
+    public static function _get_migration_default_json_(){ # no override
         return [
-            'table_name'=> static::get_table_name(),
+            'table_name'=> static::_get_table_name_(),
             'properties'=> [],
         ];
     }
 
-    public static function get_properties(){
+    public static function _get_properties_(){ # no override
         $class = static::class;
         $chain = array_reverse(class_parents($class), true) + [$class => $class];
         $props = [];
@@ -110,14 +109,14 @@ abstract class Model{
         return $props;
     }
 
-    public static function get_sql_create(){
-        $pjson = static::_get_migration_previous_json();
+    public static function _get_sql_create_(){
+        $pjson = self::_get_migration_previous_json_();
         if(!empty($pjson)){
-            throw new Exception("Can not recreate table '".static::get_table_name()."': recent migration file is not empty.");
+            throw new Exception("Can not recreate table '".static::_get_table_name_()."': recent migration file is not empty.");
         }
-        $json = static::_get_migration_default_json();
-        $sql = "CREATE TABLE ".static::get_table_name()." (";
-        $props = static::get_properties();
+        $json = self::_get_migration_default_json_();
+        $sql = "CREATE TABLE ".static::_get_table_name_()." (";
+        $props = self::_get_properties_();
         $json['properties'] = $props;
         foreach($props as $name => $config){
             $sql .= "$name $config,";
@@ -127,34 +126,34 @@ abstract class Model{
         return [$sql, $json];
     }
 
-    public static function create(){
-        [$sql, $json] = static::get_sql_create();
-        $qobj = static::make_query($sql);
-        static::_save_migration_current($json);
+    public static function _create_(){
+        [$sql, $json] = static::_get_sql_create_();
+        $qobj = static::_make_query_($sql);
+        self::_save_migration_current_($json);
         return $qobj;
     }
 
-    public static function get_sql_drop(){
-        $sql = "DROP TABLE ".static::get_table_name();
+    public static function _get_sql_drop_(){
+        $sql = "DROP TABLE ".static::_get_table_name_();
         return $sql;
     }
 
-    public static function drop(){
-        $qobj = static::make_query(static::get_sql_drop());
-        static::_save_migration_current('');
+    public static function _drop_(){
+        $qobj = static::_make_query_(static::_get_sql_drop_());
+        self::_save_migration_current_('');
         return $qobj;
     }
 
-    public static function get_sql_schema(){
-        $sql = "SELECT * from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='".static::get_table_name()."'";
+    public static function _get_sql_schema_(){
+        $sql = "SELECT * from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='".static::_get_table_name_()."'";
         return $sql;
     }
 
-    public static function get_schema(){
-        return static::make_query(static::get_sql_schema())->fetchALL(PDO::FETCH_ASSOC);
+    public static function _get_schema_(){
+        return static::_make_query_(static::_get_sql_schema_())->fetchALL(PDO::FETCH_ASSOC);
     }
 
-    public static function _get_changed_props($curs, $pres){
+    public static function _get_changed_props_($curs, $pres){ # no override
         $ops = [];
         while(($cur=each($curs)) | ($pre=each($pres))){
 
@@ -215,11 +214,11 @@ abstract class Model{
         return $ops;
     }
 
-    public static function display($msg){
+    public static function _display_($msg){
         echo "$msg\n";
     }
 
-    public static function disp_head($msg, $char='='){
+    public static function _disp_head_($msg, $char='='){
         $n = strlen($msg);
         for($i=0;$i<$n;$i++) echo $char;
         echo "\n$msg\n";
@@ -228,19 +227,19 @@ abstract class Model{
     }
 
 
-    public static function _get_alter_column_sql($op){
-        $table_name = static::get_table_name();
+    public static function _get_alter_column_sql_($op){
+        $table_name = static::_get_table_name_();
         if($op['op'] == 'rename'){
-            self::display("> RENAME: {$op['pre_key']} --> {$op['cur_key']} {$op['cur_val']}");
+            self::_display_("> RENAME: {$op['pre_key']} --> {$op['cur_key']} {$op['cur_val']}");
             $sql = "ALTER TABLE $table_name CHANGE COLUMN {$op['pre_key']} {$op['cur_key']} {$op['cur_val']};";
         }elseif($op['op'] == 'mod'){
-            self::display("> MODIFY: {$op['cur_key']}: {$op['pre_val']} --> {$op['cur_val']}");
+            self::_display_("> MODIFY: {$op['cur_key']}: {$op['pre_val']} --> {$op['cur_val']}");
             $sql = "ALTER TABLE $table_name MODIFY {$op['cur_key']} {$op['cur_val']};";
         }elseif($op['op'] == 'delete'){
-            self::display("> DELETE: {$op['pre_key']} {$op['pre_val']}");
+            self::_display_("> DELETE: {$op['pre_key']} {$op['pre_val']}");
             $sql = "ALTER TABLE $table_name DROP COLUMN {$op['pre_key']};";
         }elseif($op['op'] == 'add'){
-            self::display("> ADD   : {$op['cur_key']} {$op['cur_val']}");
+            self::_display_("> ADD   : {$op['cur_key']} {$op['cur_val']}");
             $sql = "ALTER TABLE $table_name ADD {$op['cur_key']} {$op['cur_val']};";
         }else{
             $sql = '';
@@ -248,64 +247,105 @@ abstract class Model{
         return $sql;
     }
 
-    public static function get_sql_change(){
-        $json = static::_get_migration_previous_json();
+    public static function _get_sql_change_(){
+        $json = self::_get_migration_previous_json_();
         if(empty($json)){
-            throw new Exception("Can not do any db operation on table '".static::get_table_name()."'. Either there are no migration files (Table was not created to begin with) or table was deleted (most recent migration file is empty)");
+            throw new TableNotCreatedException("Can not do any db operation on table '".static::_get_table_name_()."'. Either there are no migration files (Table was not created to begin with) or table was deleted (most recent migration file is empty)");
         }
-        $cprops = static::get_properties();
+        $cprops = self::_get_properties_();
         $pprops = $json['properties'];
 
-        $new_json = static::_get_migration_default_json();
+        $new_json = self::_get_migration_default_json_();
         $new_json['properties'] = $cprops;
 
-        $ops = static::_get_changed_props($cprops, $pprops);
+        $ops = self::_get_changed_props_($cprops, $pprops);
         $sql = '';
         $hmsg = static::class." [Migrations]";
-        self::disp_head($hmsg);
+        self::_disp_head_($hmsg);
         foreach($ops as $k=>$op){
-            $sql .= static::_get_alter_column_sql($op);
+            $sql .= static::_get_alter_column_sql_($op);
         }
         if(empty($sql)){
-            self::display("> No changes detected.");
+            self::_display_("> No changes detected.");
         }
         return [$sql, $new_json];
     }
 
-    public static function change(){
-        [$sql, $json] = static::get_sql_change();
+    public static function _change_(){
+        [$sql, $json] = static::_get_sql_change_();
         if(empty($sql)) return FALSE;
-        $qobj = static::make_query($sql);
-        static::_save_migration_current($json);
+        $qobj = static::_make_query_($sql);
+        self::_save_migration_current_($json);
         return $qobj;
     }
 
+    public static function _change_or_create_(){
+        try {
+            static::_change_();
+        } catch(TableNotCreatedException $e){
+            static::_create_();
+        }
+    }
+
+    public static function _get($where='1', $args=[], $options=array()){
+        $sql = "select * from ".static::_get_table_name_()." where $where";
+        $stmt = DB::mquery($sql, $args, $options);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
+        return $stmt;
+    }
+
+    public function _insert_(){
+
+    }
+}
+
+abstract class Model extends _Model_{
+    /* *
+     * All properties that does not start with an underscores, will be treated as
+     * database table feild/column.
+     *
+     * Property name is the column name, and the property value is the sql definition
+     * of that column. e.g:
+     *
+     * ```php
+     * $username = 'varchar(65)'
+     * ```
+     *
+     * In above, username will be the column name and 'varchar(65)' will be the
+     * sql definition of this column.
+     * */
+
+    public static $id = 'INT PRIMARY KEY AUTO_INCREMENT';
+    public static $_pk_ = 'id';
 }
 
 
 class Users extends Model{
 
-    public $username = 'varchar(260)';
-    public $aaa = 'varchar(636)';
+    public $username = 'varchar(262)';
+    public $aaa = 'varchar(635)';
     public $dfd = 'varchar(37)';
     public $dfc = 'varchar(77)';
+    public $query = 'varchar(34)';
 
 }
 
 
 $u = new Users();
 
-// var_dump(Users::get_table_name());
-// var_dump($u->get_table_name());
-// var_dump(Users::get_properties());
+// var_dump(Users::_get_table_name_());
+// var_dump($u->_get_table_name_());
+// var_dump(Users::_get_properties_());
 
-// var_dump(Users::get_sql_create());
-// Users::drop();
-// Users::create();
-// var_dump(Users::get_sql_schema('username'));
-// var_dump(Users::get_schema('username'));
+// var_dump(Users::_get_sql_create_());
+// Users::_drop_();
+// Users::_create_();
+// var_dump(Users::_get_sql_schema_('username'));
+// var_dump(Users::_get_schema_('username'));
 
-// var_dump(Users::_get_migration_current_filename(''));
+// var_dump(Users::_get_migration_current_filename_(''));
 
-// var_dump(Users::get_sql_change());
-Users::change();
+// var_dump(Users::_get_sql_change_());
+// Users::_change_or_create_();
+
+Users::_make_query_("select *");
