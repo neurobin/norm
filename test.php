@@ -296,9 +296,9 @@ abstract class _Model_{
         }
     }
 
-    public static function _select($where='1', $args=[], $options=array()){
+    public static function _select($where='1', $where_values=[], $options=array()){
         $sql = "select * from ".static::_get_table_name_()." where $where";
-        $stmt = DB::mquery($sql, $args, $options);
+        $stmt = DB::mquery($sql, $where_values, $options);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
     }
@@ -333,6 +333,16 @@ abstract class _Model_{
         var_dump($data);
         DB::insert_assoc($data, static::_get_table_name_());
     }
+
+    public function _update(){
+        $data = $this->_assoc();
+        $pkv = $data[static::$_pk_];
+        $where = "where ".static::$_pk_."=?";
+        $where_values = [$pkv];
+        unset($data[static::$_pk_]);
+        var_dump($data);
+        DB::update_assoc($data, static::_get_table_name_(), $where, $where_values);
+    }
 }
 
 abstract class Model extends _Model_{
@@ -362,10 +372,10 @@ class Users extends Model{
     public static $_col_username = 'varchar(262)';
     public static $_dfl_username = 'John Doe';
 
-    // public static $_col_aaa = 'varchar(635)';
-    // public static $_col_dfd = 'varchar(37)';
-    // public static $_col_dfc = 'varchar(77)';
-    // public static $_col_query = 'varchar(34)';
+    public static $_col_aaa = 'varchar(635)';
+    public static $_col_dfd = 'varchar(37)';
+    public static $_col_dfc = 'varchar(77)';
+    public static $_col_query = 'varchar(34)';
 
     public static function _dfl_query(){
         return 'Something';
@@ -392,6 +402,15 @@ Users::_change_or_create_();
 
 // var_dump(Users::_get_sql_change_());
 // var_dump($u->_get_assoc());
-$u->_insert();
+// $u->_insert();
+
+$stmt = Users::_select();
+
+while($user=$stmt->fetch()){
+    var_dump($user);
+    $user->aaa = "fdsfdsfdsfdf";
+    $user->_update();
+    break;
+}
 
 // Users::_make_query_("select *");

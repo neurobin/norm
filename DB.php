@@ -107,4 +107,18 @@ class DB{
         $sql .= "$nq) values ($vq)";
         self::mquery($sql, $values);
     }
+
+    public static function update_assoc($assoc, $table, $where='where ?', $where_values=[0]){
+        $sql = "update $table set ";
+        $nq = '';
+        $values = [];
+        foreach($assoc as $n=>$v){
+            $nq .= "$n=?,";
+            $values[] = $v;
+        }
+        $nq = trim($nq, ',');
+        $sql .= "$nq $where";
+        $values = array_merge($values, $where_values);
+        self::mquery($sql, $values);
+    }
 }
