@@ -358,6 +358,15 @@ abstract class _Model_{
         DB::update_assoc(static::_get_table_name_(), $data, $where, $where_values);
     }
 
+    public function _save($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        $pk = static::$_pk_;
+        if(!isset($this->$pk) || $this->$pk === NULL){
+            $this->_insert($exclude_values, $exclude_keys, $strict);
+        }else{
+            $this->_update($exclude_values, $exclude_keys, $strict);
+        }
+    }
+
     public function _delete(){
         $pk = static::$_pk_;
         if(!isset($this->$pk) || $this->$pk === NULL){
@@ -371,28 +380,38 @@ abstract class _Model_{
 }
 
 abstract class Model extends _Model_{
-    /* *
-     * All properties that does not start with an underscores, will be treated as
-     * database table feild/column.
+    /**
+     * Base class for inheritance. All models should inherit from this class.
      *
-     * Property name is the column name, and the property value is the sql definition
-     * of that column. e.g:
+     * It provides a default primary key ('id') and the $_pk_ static variable
+     * will be set as `public static $_pk_ = 'id'`.
+     *
+     * All properties that start with '_col_' in their names, will be regarded as a
+     * database column. The $_col_* variables are used as the sql definition of the
+     * corresponding column.
+     *
+     * If you want to define a variable `username` that corresponds to a column on a db table,
+     * you can do this:
      *
      * ```php
-     * $username = 'varchar(65)'
+     * public static $_col_username = 'varchar(262)'; // sql definition of column
+     * public static $_dfl_username = 'John Doe'; // default value [optional]
+     * // Note that _dfl_username can also be a public (static/non-static) function
      * ```
      *
-     * In above, username will be the column name and 'varchar(65)' will be the
-     * sql definition of this column.
-     * */
+     */
 
     public static $_col_id = 'INT PRIMARY KEY AUTO_INCREMENT';
     public static $_pk_ = 'id';
 }
 
+class MysqlBase extends Model{
 
-class Users extends Model{
-    // TODO: only non static properties should be allowed
+    public static $_col_created_at = 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP';
+    public static $_col_updated_at = 'DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP';
+}
+
+class Users extends MysqlBase{
 
     public static $_col_username = 'varchar(262)';
     public static $_dfl_username = 'John Doe';
@@ -407,14 +426,15 @@ class Users extends Model{
     }
 }
 
+Users::_change_or_create_();
 
 $u = new Users();
 
 $u->aaa = 'fdsfsdfd';
-$u->_insert();
+$u->_save();
 $u->dfd = "some";
 var_dump($u->_assoc());
-$u->_update();
+$u->_save();
 
 // var_dump(Users::_get_table_name_());
 // var_dump($u->_get_table_name_());

@@ -91,7 +91,9 @@ class DB{
         try{
             return call_user_func_array(array(self::get_instance(), $method), $args);
         }catch(\PDOException $e){
-            if(strpos($e->getMessage(), 'server has gone away') !== false){
+            $emsg = $e->getMessage();
+            if(strpos($emsg, 'server has gone away') !== false ||
+               strpos($emsg, 'server closed the connection') !== false){
                 self::create_new_pdo();
                 return call_user_func_array(array(self::get_instance(), $method), $args);
             }else{
