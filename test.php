@@ -9,7 +9,7 @@ define('DB_CHARSET', 'utf8');
 require_once 'DB.php';
 
 
-$d = DB::mquery("SHOW TABLES;");
+$d = DB::make_query("SHOW TABLES;");
 
 var_dump($d);
 
@@ -298,7 +298,7 @@ abstract class _Model_{
 
     public static function _select($where='1', $where_values=[], $options=array()){
         $sql = "SELECT * FROM ".static::_get_table_name_()." WHERE $where";
-        $stmt = DB::mquery($sql, $where_values, $options);
+        $stmt = DB::make_query($sql, $where_values, $options);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
     }
@@ -413,6 +413,7 @@ $u = new Users();
 $u->aaa = 'fdsfsdfd';
 $u->_insert();
 $u->dfd = "some";
+var_dump($u->_assoc());
 $u->_update();
 
 // var_dump(Users::_get_table_name_());
