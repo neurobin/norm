@@ -21,10 +21,17 @@ abstract class _Model_{
     }
 
     public static function _get_table_name_(){
-        return static::class;
+        /**
+         * Table name for your model. Override if you want custom table name.
+         */
+        return str_replace('\\', '_', static::class);
     }
 
     public static function _get_migration_dir_(){
+        /**
+         * Override if you want to use a different migration dir. Default is
+         * the directory where this (internal _Model_) file resides.
+         */
         return static::$_migration_base_dir_."/".static::_get_table_name_();
     }
 
@@ -113,6 +120,9 @@ abstract class _Model_{
     }
 
     public static function _get_sql_create_(){
+        /**
+         * Get the sql for creating table for the model.
+         */
         $pjson = self::_get_migration_previous_json_();
         if(!empty($pjson)){
             throw new Exception("Can not recreate table '".static::_get_table_name_()."': recent migration file is not empty.");
@@ -130,6 +140,9 @@ abstract class _Model_{
     }
 
     public static function _create_(){
+        /**
+         * Create a table for the model.
+         */
         [$sql, $json] = static::_get_sql_create_();
         $qobj = static::_make_query_($sql);
         self::_save_migration_current_($json);
@@ -137,11 +150,18 @@ abstract class _Model_{
     }
 
     public static function _get_sql_drop_(){
+        /**
+         * Get sql to delete the table.
+         */
         $sql = "DROP TABLE ".static::_get_table_name_();
         return $sql;
     }
 
     public static function _drop_(){
+        /**
+         * Delete the table. Dangerous action. You must not use this unless you know what you
+         * are doing.
+         */
         $qobj = static::_make_query_(static::_get_sql_drop_());
         self::_save_migration_current_('');
         return $qobj;
@@ -275,6 +295,9 @@ abstract class _Model_{
     }
 
     public static function _change_(){
+        /**
+         * Detect and apply changes to a model.
+         */
         [$sql, $json] = static::_get_sql_change_();
         if(empty($sql)) return FALSE;
         $qobj = static::_make_query_($sql);
@@ -283,6 +306,9 @@ abstract class _Model_{
     }
 
     public static function _change_or_create_(){
+        /**
+         * Detect and apply changes to a model if previous migration exists, otherwise create a new one.
+         */
         try {
             static::_change_();
         } catch(TableNotCreatedException $e){
@@ -309,6 +335,11 @@ abstract class _Model_{
     }
 
     public function _assoc($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        /**
+         * Get the model data as an associative array.
+         *
+         * if $strict is false, exclude values/keys will be loosely compared.
+         */
         $this_props = get_object_vars($this);
         $all_props = static::_get_properties_();
         $props = array();
@@ -321,14 +352,28 @@ abstract class _Model_{
         return $props;
     }
 
-    public static function _select($where='1', $where_values=[], $options=array()){
-        $sql = "SELECT * FROM ".static::_get_table_name_()." WHERE $where";
+    public static function _select($what='*', $where='1', $where_values=[], $options=array()){
+        /**
+         * SELECT $what FROM this_table WHERE $where
+         */
+        $sql = "SELECT $what FROM ".static::_get_table_name_()." WHERE $where";
         $stmt = DB::make_query($sql, $where_values, $options);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
     }
 
+    public static function _filter($where='1', $where_values=[], $options=array()){
+        /**
+         * SELECT * FROM this_table WHERE $where
+         */
+        return static::_select('*', $where, $where_values, $options);
+    }
+
     public function _insert($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        /**
+         * Insert the data that corrsponds to this object. Will throw error if item
+         * already exists.
+         */
         $pk = static::$_pk_;
         $data = $this->_assoc($exclude_values, $exclude_keys, $strict);
         if($data[$pk] !== NULL){
@@ -340,6 +385,9 @@ abstract class _Model_{
     }
 
     public function _update($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        /**
+         * Update the model data. Throws error if does not exist.
+         */
         $pk = static::$_pk_;
         if(!isset($this->$pk) || $this->$pk === NULL){
             throw new Exception("Can not update, item does not exist: ". print_r($this, true));
@@ -353,6 +401,9 @@ abstract class _Model_{
     }
 
     public function _save($exclude_values=[], $exclude_keys=[], $strict=TRUE){
+        /**
+         * Saves the model data to db table. Updates if exists and creates if it does not.
+         */
         $pk = static::$_pk_;
         if(!isset($this->$pk) || $this->$pk === NULL){
             $this->_insert($exclude_values, $exclude_keys, $strict);
@@ -362,6 +413,9 @@ abstract class _Model_{
     }
 
     public function _delete(){
+        /**
+         * Deletes the model data corresponding to this object.
+         */
         $pk = static::$_pk_;
         if(!isset($this->$pk) || $this->$pk === NULL){
             throw new Exception("Can not delete, item does not exist: ". print_r($this, true));
