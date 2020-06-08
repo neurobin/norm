@@ -167,7 +167,7 @@ $migrate_alien = [
 
 Now do a dry run (`php migrate.php dry`) and check the changes:
 
-```php
+```bash
 $ php migrate.php dry
 
 ======================
@@ -190,7 +190,7 @@ $ php migrate.php dry
 After reviewing the changes, you can apply the migration with `php migrate.php apply`:
 
 
-```php
+```bash
 $ php migrate.php apply
 
 =============
@@ -212,7 +212,7 @@ $ php migrate.php apply
 
 You can also run an interactive migration with `php migrate.php`:
 
-```php
+```bash
 $ php migrate.php
 
 ======================
