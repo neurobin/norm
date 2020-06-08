@@ -7,10 +7,10 @@ use PDOException;
 
 class _DB_{
     protected $pdo_instance;
-    private $dsn;
-    private $db_user;
-    private $db_password;
-    private $attrs;
+    protected $dsn;
+    protected $db_user;
+    protected $db_password;
+    protected $attrs;
 
     public function __construct($dsn, $db_user, $db_password, $attrs){
         $this->dsn = $dsn;
@@ -27,7 +27,7 @@ class _DB_{
     }
 
     public function create_new_pdo(){
-            $this->pdo_instance = new PDO($this->dsn, $this->db_user, $this->db_password, $this->attrs);
+        $this->pdo_instance = new PDO($this->dsn, $this->db_user, $this->db_password, $this->attrs);
     }
 
     public function close_connection(){
@@ -50,74 +50,27 @@ class _DB_{
     }
 
     public function set_attrs($arr){
-        if(empty($attrs)) return array();
+        if(empty($arr)) return array();
         $previous_attrs = $this->attrs;
         foreach($arr as $k=>$v){
-            // try{
+            try{
                 $this->pdo_instance->setAttribute($k, $v);
-            // }catch(PDOException $e){
-            //     $emsg = $e->getMessage();
-            //     if(strpos($emsg, 'server has gone away') !== false ||
-            //        strpos($emsg, 'server closed the connection') !== false){
-            //         $this->create_new_pdo();
-            //         $this->pdo_instance->setAttribute($k, $v); // do this separately
-            //         // so that attrs does not change on failure
-            //         $this->attrs = $arr;
-            //     }else{
-            //         throw $e;
-            //     }
-            // }
+            }catch(PDOException $e){
+                $emsg = $e->getMessage();
+                if(strpos($emsg, 'server has gone away') !== false ||
+                   strpos($emsg, 'server closed the connection') !== false){
+                    $this->create_new_pdo();
+                    $this->pdo_instance->setAttribute($k, $v); // do this separately
+                    // so that attrs does not change on failure
+                }else{
+                    throw $e;
+                }
+            }
         }
         $this->attrs = $arr;
         return $previous_attrs;
     }
 
-    public function make_query($sql, $args = [], $options=array(), $attrs=[]){
-        $previous_attrs = $this->set_attrs($attrs);
-        $qobj = $this->prepare($sql, $options);
-        $qobj->execute($args);
-        $this->set_attrs($previous_attrs);
-        return $qobj;
-    }
-
-    public function insert_assoc($table, &$assoc, $pk=''){
-        $sql = "INSERT INTO $table (";
-        $nq = '';
-        $vq = '';
-        $values = [];
-        foreach($assoc as $n=>$v){
-            $nq .= "$n,";
-            $vq .= "?,";
-            $values[] = $v;
-        }
-        $nq = trim($nq, ',');
-        $vq = trim($vq, ',');
-        $sql .= "$nq) VALUES ($vq)";
-        $res = $this->make_query($sql, $values);
-        if(!empty($pk)){
-            $assoc[$pk] = $this->lastInsertId();
-        }
-        return $res;
-    }
-
-    public function update_assoc($table, $assoc, $where='?', $where_values=[0]){
-        $sql = "UPDATE $table SET ";
-        $nq = '';
-        $values = [];
-        foreach($assoc as $n=>$v){
-            $nq .= "$n=?,";
-            $values[] = $v;
-        }
-        $nq = trim($nq, ',');
-        $sql .= "$nq WHERE $where";
-        $values = array_merge($values, $where_values);
-        return $this->make_query($sql, $values);
-    }
-
-    public function delete_where($table, $where='?', $where_values=[0]){
-        $sql = "DELETE FROM $table WHERE $where";
-        return $this->make_query($sql, $where_values);
-    }
 }
 
 
@@ -174,7 +127,7 @@ class DB{
     }
 
     public static function close_connection(){
-        self::get_instance()->close_connection();
+        if(self::$db_instance !== null) self::$db_instance->close_connection();
         self::$db_instance = null;
     }
 
@@ -214,4 +167,50 @@ class DB{
         return self::$db_instance;
     }
 
+    public function make_query($sql, $args = [], $options=array(), $attrs=[]){
+        $previous_attrs = self::get_instance()->set_attrs($attrs);
+        $qobj = self::get_instance()->prepare($sql, $options);
+        $qobj->execute($args);
+        self::get_instance()->set_attrs($previous_attrs);
+        return $qobj;
+    }
+
+    public function insert_assoc($table, &$assoc, $pk=''){
+        $sql = "INSERT INTO $table (";
+        $nq = '';
+        $vq = '';
+        $values = [];
+        foreach($assoc as $n=>$v){
+            $nq .= "$n,";
+            $vq .= "?,";
+            $values[] = $v;
+        }
+        $nq = trim($nq, ',');
+        $vq = trim($vq, ',');
+        $sql .= "$nq) VALUES ($vq)";
+        $res = self::make_query($sql, $values);
+        if(!empty($pk)){
+            $assoc[$pk] = self::get_instance()->lastInsertId();
+        }
+        return $res;
+    }
+
+    public function update_assoc($table, $assoc, $where='?', $where_values=[0]){
+        $sql = "UPDATE $table SET ";
+        $nq = '';
+        $values = [];
+        foreach($assoc as $n=>$v){
+            $nq .= "$n=?,";
+            $values[] = $v;
+        }
+        $nq = trim($nq, ',');
+        $sql .= "$nq WHERE $where";
+        $values = array_merge($values, $where_values);
+        return self::make_query($sql, $values);
+    }
+
+    public function delete_where($table, $where='?', $where_values=[0]){
+        $sql = "DELETE FROM $table WHERE $where";
+        return self::make_query($sql, $where_values);
+    }
 }

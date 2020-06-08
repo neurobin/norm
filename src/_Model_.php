@@ -11,15 +11,35 @@ use PDO;
 abstract class _Model_{
     private static $_column_prefix_ = '_col_';
     private static $_default_prefix_ = '_dfl_';
+    private $_props_ = array();
 
     public static $_migration_index_length_ = 6;
     public static $_migration_base_dir_ = __DIR__.'/migrations';
 
-    // public function __construct($array=[]){
-    //     foreach($array as $k=>$v){
-    //         $this->$k = $v;
-    //     }
-    // }
+    public function __construct($array=[]){
+        $this->_props_ = self::_get_properties_();
+        foreach($array as $k=>$v){
+            $this->$k = $v;
+        }
+    }
+
+    public function __set($name, $value){
+        if(!array_key_exists($name, $this->_props_)){
+            if($name[0] !== '_'){
+                throw new PropertyDoesNotExistException("Property '$name' is not defined in model: ".static::class);
+            }
+        }
+        $this->$name = $value;
+    }
+
+    public function __get($name){
+        if(!array_key_exists($name, $this->_props_)){
+            if($name[0] !== '_'){
+                throw new PropertyDoesNotExistException("Property '$name' is not defined in model: ".static::class);
+            }
+        }
+        return $this->$name;
+    }
 
     public static function _make_query_($sql){
         /**
@@ -202,8 +222,6 @@ abstract class _Model_{
     }
 
     public static function _get_changed_props_($curs, $pres){ # no override
-        // var_dump($curs);
-        // var_dump($pres);
         $ops = [];
         while(($cur=each($curs)) | ($pre=each($pres))){
 
@@ -405,9 +423,10 @@ abstract class _Model_{
                 PDO::ATTR_STRINGIFY_FETCHES => FALSE,
             );
         }
-        var_dump($attrs);
         $stmt = DB::make_query($sql, $where_values, $options, $attrs);
-        $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
+        // FETCH_CLASS does not call our grand father constructors.
+        // so we should use FETCH_INTO
+        $stmt->setFetchMode(PDO::FETCH_INTO, new static());
         return $stmt;
     }
 
@@ -418,6 +437,23 @@ abstract class _Model_{
         return static::_select('*', $where, $where_values, $options, $attrs);
     }
 
+    public static function _first($where='1', $where_values=[], $options=array(), $attrs=array()){
+        /** Return the first item from:
+         *
+         * SELECT * FROM this_model_table WHERE $where
+         */
+        $stmt = static::_select('*', $where, $where_values, $options, $attrs);
+        return $stmt->fetch();
+    }
+
+    public static function _get($pk){
+        /**
+         * Get the item for the given pk (primary key)
+         */
+        $pkn = static::$_pk_;
+        return self::_first("$pkn=?", [$pk]);
+    }
+
     public function _insert($exclude_values=[], $exclude_keys=[], $strict=TRUE){
         /**
          * Insert the data that corrsponds to this object. Will throw error if item
@@ -425,7 +461,7 @@ abstract class _Model_{
          */
         $pk = static::$_pk_;
         $data = $this->_assoc($exclude_values, $exclude_keys, $strict);
-        if($data[$pk] !== NULL){
+        if(isset($this->$pk) && $this->$pk !== NULL){
             throw new Exception("Can not insert, item exists: ". print_r($data, true));
         }
         unset($data[$pk]);

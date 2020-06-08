@@ -5,11 +5,12 @@ require 'db_config.php';
 require 'models.php';
 
 use models\User;
+use Norm\DB;
 use Norm\_DB_;
 
-$d = DB::create_connection();
+// $d = DB::create_connection();
 
-var_dump($d);
+// var_dump($d);
 
 // $user = new User(array(
 //     'username'=> 'Jahidul Hamid',
@@ -17,9 +18,15 @@ var_dump($d);
 //     'email'=> 'fdslfjds@fdsl.com',
 // ));
 
-// var_dump($user);
+// // var_dump($user->_assoc());
 
 // $user->_save();
+
+// var_dump(User::_first());
+
+$user14 = User::_get(14);
+
+var_dump($user14);
 
 // $stmt = User::_select();
 
