@@ -308,13 +308,6 @@ abstract class _Model_{
         return $v;
     }
 
-    public static function _select($where='1', $where_values=[], $options=array()){
-        $sql = "SELECT * FROM ".static::_get_table_name_()." WHERE $where";
-        $stmt = DB::make_query($sql, $where_values, $options);
-        $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
-        return $stmt;
-    }
-
     public function _assoc($exclude_values=[], $exclude_keys=[], $strict=TRUE){
         $this_props = get_object_vars($this);
         $all_props = static::_get_properties_();
@@ -326,6 +319,13 @@ abstract class _Model_{
             $props[$n] = $v;
         }
         return $props;
+    }
+
+    public static function _select($where='1', $where_values=[], $options=array()){
+        $sql = "SELECT * FROM ".static::_get_table_name_()." WHERE $where";
+        $stmt = DB::make_query($sql, $where_values, $options);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
+        return $stmt;
     }
 
     public function _insert($exclude_values=[], $exclude_keys=[], $strict=TRUE){

@@ -41,15 +41,15 @@ class Users extends MysqlBase{
     }
 }
 
-Users::_change_or_create_();
+// Users::_change_or_create_();
 
-$u = new Users();
+// $u = new Users();
 
-$u->aaa = 'fdsfsdfd';
-$u->_save();
-$u->dfd = "some";
-var_dump($u->_assoc());
-$u->_save();
+// $u->aaa = 'fdsfsdfd';
+// $u->_save();
+// $u->dfd = "some";
+// var_dump($u->_assoc());
+// $u->_save();
 
 // var_dump(Users::_get_table_name_());
 // var_dump($u->_get_table_name_());
@@ -77,7 +77,7 @@ while($user=$stmt->fetch()){
     $user->_update();
     // $user->_delete();
 
-    break;
+    //break;
 }
 
 // Users::_make_query_("select *");
