@@ -5,19 +5,6 @@ require 'models.php';                       // import models
 require 'db_config.php';                    // import db config
 
 use Norm\Migrate;
-use Norm\MysqlBase;
-
-class Users extends MysqlBase{
-
-    public static $_col_username = 'varchar(262)';
-    public static $_col_password = 'varchar(255)';
-    public static $_col_email = 'varchar(255)';
-
-    //default values that will be used in PHP object mapping.
-    //These won't change the db schema. If you want to set default values to
-    //the db column schema itself, define it accordingly above (e.g DEFAULT NULL or DEFAULT 0 etc.)
-    public static $_dfl_username = 'John Doe';
-}
 
 
 // You should add all of your active native[1] models in this list.
@@ -30,7 +17,6 @@ class Users extends MysqlBase{
 $migrate_native = [
     models\Users::class,
     models\UserProfile::class,
-    Users::class,
 ];
 
 
@@ -43,7 +29,6 @@ $migrate_native = [
 // at least for the first time. After first run, an alien model becomes native
 // and thus can be moved to the above $migrate_native list.
 $migrate_alien = [
-
 ];
 
 

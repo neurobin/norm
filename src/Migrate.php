@@ -9,7 +9,8 @@ class Migrate{
     public static function run_alien($class){
         $prev = $class::_get_migration_previous_file_();
         if(empty($prev)){
-            $class::_save_migration_current_();
+            $json = $class::_get_migration_current_json_();
+            $class::_save_migration_current_($json);
         }else{
             //no-op;
         }

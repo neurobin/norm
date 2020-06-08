@@ -17,7 +17,11 @@ abstract class _Model_{
         /**
          * Override this method if you want to provide your own PDO DB utility implementation.
          */
-        return DB::get_instance()->query($sql);
+        $options = array(
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_EMULATE_PREPARES   => TRUE, // must be enabled by default.
+        );
+        return DB::make_query($sql, [], $options);
     }
 
     public static function _get_table_name_(){
@@ -270,6 +274,17 @@ abstract class _Model_{
         return $sql;
     }
 
+    public static function _get_migration_current_json_from_cprops_($cprops){
+        $new_json = self::_get_migration_default_json_();
+        $new_json['properties'] = $cprops;
+        return $new_json;
+    }
+
+    public static function _get_migration_current_json_(){
+        $cprops = self::_get_properties_();
+        return self::_get_migration_current_json_from_cprops_($cprops);
+    }
+
     public static function _get_sql_change_(){
         $json = self::_get_migration_previous_json_();
         if(empty($json)){
@@ -278,8 +293,7 @@ abstract class _Model_{
         $cprops = self::_get_properties_();
         $pprops = $json['properties'];
 
-        $new_json = self::_get_migration_default_json_();
-        $new_json['properties'] = $cprops;
+        $new_json = self::_get_migration_current_json_from_cprops_($cprops);
 
         $ops = self::_get_changed_props_($cprops, $pprops);
         $sql = '';
@@ -354,9 +368,15 @@ abstract class _Model_{
 
     public static function _select($what='*', $where='1', $where_values=[], $options=array()){
         /**
-         * SELECT $what FROM this_table WHERE $where
+         * SELECT $what FROM this_model_table WHERE $where
          */
         $sql = "SELECT $what FROM ".static::_get_table_name_()." WHERE $where";
+        if(empty($options)){
+            $options = array(
+                PDO::ATTR_EMULATE_PREPARES   => FALSE,
+                PDO::ATTR_STRINGIFY_FETCHES => FALSE,
+            );
+        }
         $stmt = DB::make_query($sql, $where_values, $options);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
@@ -364,7 +384,7 @@ abstract class _Model_{
 
     public static function _filter($where='1', $where_values=[], $options=array()){
         /**
-         * SELECT * FROM this_table WHERE $where
+         * SELECT * FROM this_model_table WHERE $where
          */
         return static::_select('*', $where, $where_values, $options);
     }

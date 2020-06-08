@@ -17,10 +17,12 @@ class Users extends MysqlBase{
 
 class UserProfile extends MysqlBase{
     public static $_col_user_id = 'int';
+    public static $_col_phone = 'varchar(255)';
     public static $_col_first_name = 'varchar(255)';
     public static $_col_last_name = 'varchar(255)';
     public static $_col_address = 'varchar(255)';
-    public static $_col_phone = 'varchar(255)';
+    public static $_col_hobby_description = 'text';
+    public static $_col_work_address = 'varchar(300)';
 
 
     //default values that will be used in PHP object mapping. (Yes, it can be a function that returns a value)

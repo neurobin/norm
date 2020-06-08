@@ -66,8 +66,8 @@ class DB{
             $options = array(
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => FALSE,
-                PDO::ATTR_STRINGIFY_FETCHES => FALSE,
+                PDO::ATTR_EMULATE_PREPARES   => TRUE, // must be enabled by default.
+                // PDO::ATTR_STRINGIFY_FETCHES => FALSE, // this requires PDO::ATTR_EMULATE_PREPARES to be FALSE
             );
         }
 
