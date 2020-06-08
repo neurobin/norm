@@ -1,3 +1,5 @@
+sudo: required
+dist: xenial
 language: php
 php:
   - "7.1"
@@ -8,5 +10,8 @@ services:
   - mysql
 before_install:
   - mysql -u root --password="" < tests/travis.sql
+before_script:
+  - sudo apt install composer
+  - composer install
 script:
   - php tests/test.php

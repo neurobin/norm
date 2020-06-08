@@ -442,7 +442,7 @@ abstract class _Model_{
          *
          * SELECT * FROM this_model_table WHERE $where
          */
-        $stmt = static::_select('*', $where, $where_values, $options, $attrs);
+        $stmt = static::_select('*', $where.' limit 1', $where_values, $options, $attrs);
         return $stmt->fetch();
     }
 
