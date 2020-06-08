@@ -1,0 +1,12 @@
+language: php
+php:
+  - "7.1"
+  - "7.2"
+  - "7.3"
+  - "7.4"
+services:
+  - mysql
+before_install:
+  - mysql -u root --password="" < tests/travis.sql
+script:
+  - php tests/test.php
