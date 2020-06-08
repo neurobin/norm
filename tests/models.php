@@ -1,12 +1,12 @@
 <?php namespace models;
 
-use Norm\MysqlBase;
+use Norm\MysqlBase; // this base model has two additional fields: updated_at and created_at.
 
-class Users extends MysqlBase{
+class User extends MysqlBase{
 
     public static $_col_username = 'varchar(262)';
     public static $_col_password = 'varchar(255)';
-    public static $_col_email_id = 'varchar(255)';
+    public static $_col_email = 'varchar(255)';
 
     //default values that will be used in PHP object mapping.
     //These won't change the db schema. If you want to set default values to
@@ -31,4 +31,11 @@ class UserProfile extends MysqlBase{
     public static function _dfl_phone(){
         return '(+880)000-000000';
     }
+}
+
+
+class UserPost extends MysqlBase{
+    public static $_col_user_id = 'int';
+    public static $_col_post_header = 'text';
+    public static $_col_post_content = 'text';
 }

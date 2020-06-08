@@ -1,10 +1,8 @@
 <?php
 
-require __DIR__ . '/vendor/autoload.php';   // setup autoloader
-require 'models.php';                       // import models
-require 'db_config.php';                    // import db config
-
-use Norm\Migrate;
+require __DIR__ . '/../vendor/autoload.php';    // setup autoloader
+require 'models.php';                           // import your models
+require 'db_config.php';                        // import db config
 
 
 // You should add all of your active native[1] models in this list.
@@ -15,14 +13,16 @@ use Norm\Migrate;
 // Do not add abstract models or models that you only use for inheritance in this
 // list as they are passive models.
 $migrate_native = [
-    models\Users::class,        // example
+    models\User::class,        // example
     models\UserProfile::class,  // example
+    models\UserPost::class,  // example
 ];
 
 
-// native[1]: models that do not yet have a db table or there db table was created by this migrate script.
-// If your model already have a db table that was created elsewhere and is in sync with current model
-// definition, you should add it to the below $migrate_alien list.
+// native[1]: models that do not yet have a db table or there db table was created
+// by this migrate script. If your model already have a db table that was created
+// elsewhere and is in sync with current model definition, you should add it to
+// the below $migrate_alien list.
 
 // Alien models are those that were created elsewhere and already have
 // a definition and a corresponding table. Alien models should be added here
@@ -36,6 +36,6 @@ $migrate_alien = [
 ########################## Migration runner ####################################
 ################################################################################
 
-Migrate::run_all($migrate_native, $migrate_alien);
+Norm\Migrate::run_all($migrate_native, $migrate_alien);
 
 ################################################################################

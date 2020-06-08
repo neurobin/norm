@@ -1,27 +1,35 @@
 <?php namespace Norm;
 
 use Norm\Exceptions\TableNotCreatedException;
+use Norm\Exceptions\PropertyDoesNotExistException;
+use Norm\Exceptions\NameNotAllowedException;
 use Norm\DB;
 use Exception;
 use ReflectionClass;
 use PDO;
 
 abstract class _Model_{
-    private static $column_prefix = '_col_';
-    private static $default_prefix = '_dfl_';
+    private static $_column_prefix_ = '_col_';
+    private static $_default_prefix_ = '_dfl_';
 
     public static $_migration_index_length_ = 6;
     public static $_migration_base_dir_ = __DIR__.'/migrations';
+
+    // public function __construct($array=[]){
+    //     foreach($array as $k=>$v){
+    //         $this->$k = $v;
+    //     }
+    // }
 
     public static function _make_query_($sql){
         /**
          * Override this method if you want to provide your own PDO DB utility implementation.
          */
-        $options = array(
+        $attrs = array(
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_EMULATE_PREPARES   => TRUE, // must be enabled by default.
+            PDO::ATTR_EMULATE_PREPARES   => TRUE,
         );
-        return DB::make_query($sql, [], $options);
+        return DB::make_query($sql, [], [], $attrs);
     }
 
     public static function _get_table_name_(){
@@ -106,13 +114,13 @@ abstract class _Model_{
         $class = static::class;
         $chain = array_reverse(class_parents($class), true) + [$class => $class];
         $props = [];
-        $plength = strlen(self::$column_prefix);
+        $plength = strlen(self::$_column_prefix_);
         foreach($chain as $class){
             $cprops = (new ReflectionClass($class))->getDefaultProperties();
             foreach($cprops as $name => $prop){
                 $prefix = substr($name, 0, $plength);
                 $suffix = substr($name, $plength);
-                if($prefix === self::$column_prefix){
+                if($prefix === self::$_column_prefix_){
                     if($suffix[0] == '_'){
                         throw new Exception("We do not allow column name starting with underscore (_): $suffix");
                     }
@@ -123,16 +131,20 @@ abstract class _Model_{
         return $props;
     }
 
-    public static function _get_sql_create_(){
+    public static function _get_sql_create_($apply){
         /**
          * Get the sql for creating table for the model.
          */
         $pjson = self::_get_migration_previous_json_();
+        $table_name = static::_get_table_name_();
         if(!empty($pjson)){
-            throw new Exception("Can not recreate table '".static::_get_table_name_()."': recent migration file is not empty.");
+            throw new Exception("Can not recreate table '$table_name': recent migration file is not empty.");
         }
+        $hmsg = ': '.static::class;
+        if(!$apply) $hmsg .= " [DryRun]";
+        self::_disp_head_($hmsg);
         $json = self::_get_migration_default_json_();
-        $sql = "CREATE TABLE ".static::_get_table_name_()." (";
+        $sql = "CREATE TABLE $table_name (";
         $props = self::_get_properties_();
         $json['properties'] = $props;
         foreach($props as $name => $config){
@@ -140,6 +152,11 @@ abstract class _Model_{
         }
         $sql = rtrim($sql, ',');
         $sql .= ");";
+        if(empty($sql)){
+            self::_display_("> No changes detected.");
+        }else{
+            self::_display_("> Create table '$table_name'");
+        }
         return [$sql, $json];
     }
 
@@ -147,16 +164,13 @@ abstract class _Model_{
         /**
          * Create a table for the model.
          */
-        [$sql, $json] = static::_get_sql_create_();
+        [$sql, $json] = static::_get_sql_create_($apply);
         if(empty($sql)) return FALSE;
         if($apply){
             $qobj = static::_make_query_($sql);
             self::_save_migration_current_($json);
             return $qobj;
         }
-        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        echo "=== This was a dry run, no changes were applied. ===\n";
-        echo "====================================================\n\n";
         return TRUE;
     }
 
@@ -256,6 +270,7 @@ abstract class _Model_{
 
     public static function _disp_head_($msg, $char='='){
         $n = strlen($msg);
+        echo "\n";
         for($i=0;$i<$n;$i++) echo $char;
         echo "\n$msg\n";
         for($i=0;$i<$n;$i++) echo $char;
@@ -294,7 +309,7 @@ abstract class _Model_{
         return self::_get_migration_current_json_from_cprops_($cprops);
     }
 
-    public static function _get_sql_change_(){
+    public static function _get_sql_change_($apply){
         $json = self::_get_migration_previous_json_();
         if(empty($json)){
             throw new TableNotCreatedException("Can not do any db operation on table '".static::_get_table_name_()."'. Either there are no migration files (Table was not created to begin with) or table was deleted (most recent migration file is empty)");
@@ -306,7 +321,8 @@ abstract class _Model_{
 
         $ops = self::_get_changed_props_($cprops, $pprops);
         $sql = '';
-        $hmsg = static::class." [Migrations]";
+        $hmsg = ': '.static::class;
+        if(!$apply) $hmsg .= " [DryRun]";
         self::_disp_head_($hmsg);
         foreach($ops as $k=>$op){
             $sql .= static::_get_alter_column_sql_($op);
@@ -321,16 +337,13 @@ abstract class _Model_{
         /**
          * Detect and apply changes to a model.
          */
-        [$sql, $json] = static::_get_sql_change_();
+        [$sql, $json] = static::_get_sql_change_($apply);
         if(empty($sql)) return FALSE;
         if($apply){
             $qobj = static::_make_query_($sql);
             self::_save_migration_current_($json);
             return $qobj;
         }
-        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        echo "=== This was a dry run, no changes were applied. ===\n";
-        echo "====================================================\n\n";
         return TRUE;
     }
 
@@ -349,7 +362,7 @@ abstract class _Model_{
         if(isset($this->$n)){
             $v = $this->$n;
         }else{
-            $default_var_name = self::$default_prefix.$n;
+            $default_var_name = self::$_default_prefix_.$n;
             if(method_exists($this, $default_var_name)){
                 $v = call_user_func_array(array($this, $default_var_name), []);
             }elseif(isset($this->$default_var_name)){
@@ -381,27 +394,28 @@ abstract class _Model_{
         return $props;
     }
 
-    public static function _select($what='*', $where='1', $where_values=[], $options=array()){
+    public static function _select($what='*', $where='1', $where_values=[], $options=array(), $attrs=array()){
         /**
          * SELECT $what FROM this_model_table WHERE $where
          */
         $sql = "SELECT $what FROM ".static::_get_table_name_()." WHERE $where";
-        if(empty($options)){
-            $options = array(
+        if(empty($attrs)){
+            $attrs = array(
                 PDO::ATTR_EMULATE_PREPARES   => FALSE,
                 PDO::ATTR_STRINGIFY_FETCHES => FALSE,
             );
         }
-        $stmt = DB::make_query($sql, $where_values, $options);
+        var_dump($attrs);
+        $stmt = DB::make_query($sql, $where_values, $options, $attrs);
         $stmt->setFetchMode(PDO::FETCH_CLASS, static::class, []);
         return $stmt;
     }
 
-    public static function _filter($where='1', $where_values=[], $options=array()){
+    public static function _filter($where='1', $where_values=[], $options=array(), $attrs=array()){
         /**
          * SELECT * FROM this_model_table WHERE $where
          */
-        return static::_select('*', $where, $where_values, $options);
+        return static::_select('*', $where, $where_values, $options, $attrs);
     }
 
     public function _insert($exclude_values=[], $exclude_keys=[], $strict=TRUE){
