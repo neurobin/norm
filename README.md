@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/neurobin/norm.svg?branch=release)](https://travis-ci.org/neurobin/norm)
 
-A simple ORM built for speedy development. It comes with a migration tool and it uses PDO for communicating with databases. It does not do much abstraction like other ORMs and you will find that you are running SQL queries with PDO, except, it's easier than running those queries with PDO itself.
+A simple ORM built for speedy development. It comes with a migration tool and it uses PDO for communicating with databases. It does not do much abstraction like other ORMs and you will find that you are running SQL queries with PDO, except, it's easier than running those queries with PDO directly.
 
 Also, you can not make spelling mistakes such as 'userrname' when your database schema is defined with correct spelling 'username'. It will warn you immediately where you make this mistake before doing anything with that misspelled model property.
 
@@ -112,7 +112,7 @@ $user14->_delete();
 
 ## Read (select)
 
-You have several methods for this: , ,  and `_get`.
+You have several methods for this:
 
 1. `_select`: This method will let you pass column names (as sql e.g `username,email`) and WHERE query to make a SELECT query. It uses PDO, thus you can pass where_query along with where_values array (e.g `where_query='email=?'`, `where_values=['someone@something.com']`) to make a prepared query.
 2. `_filter`: Wrapper around `_select`. It fetches all columns, thus you only pass the WHERE query.
@@ -167,7 +167,7 @@ $migrate_alien = [
 
 Now do a dry run (`php migrate.php dry`) and check the changes:
 
-```bash
+```php
 $ php migrate.php dry
 
 ======================
@@ -212,7 +212,7 @@ $ php migrate.php apply
 
 You can also run an interactive migration with `php migrate.php`:
 
-```bash
+```php
 $ php migrate.php
 
 ======================
