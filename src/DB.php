@@ -1,5 +1,9 @@
 <?php namespace Norm;
 
+use PDO;
+use Exception;
+use PDOException;
+
 class DB{
     /* *
      * Required constants:
@@ -14,7 +18,7 @@ class DB{
      * --------------
      *
      * 1. Method names must be in snake case with at least two words.
-     *    \PDO uses camelCase, we use snake case to distinguish our methods from \PDO.
+     *    PDO uses camelCase, we use snake case to distinguish our methods from PDO.
      * 2. Internal method names must start with a single underscore.
      *
      * */
@@ -22,11 +26,11 @@ class DB{
     public static $throw_connection_exception = true;
 
     public function __construct() {
-        throw new \Exception("ERROR: ".__CLASS__." does not allow object instantiation.");
+        throw new Exception("ERROR: ".__CLASS__." does not allow object instantiation.");
     }
 
     public function __clone(){
-        throw new \Exception("ERROR: ".__CLASS__." does not allow object copy.");
+        throw new Exception("ERROR: ".__CLASS__." does not allow object copy.");
     }
 
     public static function _create_error_message($msg, $scope, $prefix="ERROR:"){
@@ -46,7 +50,7 @@ class DB{
         try{
             self::query('SELECT 1');
             return TRUE;
-        }catch(\Exception $e){
+        }catch(Exception $e){
             // self::$_error_log($e->getMessage());
             return FALSE;
         }
@@ -60,21 +64,21 @@ class DB{
         */
         if(empty($options)){
             $options = array(
-                \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
-                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                // \PDO::ATTR_EMULATE_PREPARES   => FALSE,
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                // PDO::ATTR_EMULATE_PREPARES   => FALSE,
             );
         }
 
         $dsn = DB_DRIVER.':host='.DB_HOST.';dbname='.DB_NAME.';charset='.DB_CHARSET;
         self::close_connection();
         try{
-            self::$pdo_instance = new \PDO($dsn, DB_USER, DB_PASSWORD, $options);
+            self::$pdo_instance = new PDO($dsn, DB_USER, DB_PASSWORD, $options);
             return TRUE;
-        }catch (\Exception $e){
+        }catch (Exception $e){
             self::_error_log($e->getMessage());
             if(self::$throw_connection_exception){
-                throw new \PDOException($e->getMessage());
+                throw new PDOException($e->getMessage());
             }
             return FALSE;
         }
@@ -90,7 +94,7 @@ class DB{
     public static function __callStatic($method, $args){
         try{
             return call_user_func_array(array(self::get_instance(), $method), $args);
-        }catch(\PDOException $e){
+        }catch(PDOException $e){
             $emsg = $e->getMessage();
             if(strpos($emsg, 'server has gone away') !== false ||
                strpos($emsg, 'server closed the connection') !== false){

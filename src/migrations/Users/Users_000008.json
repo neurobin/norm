@@ -1,0 +1,1 @@
+{"table_name":"Users","properties":{"id":"INT PRIMARY KEY AUTO_INCREMENT","created_at":"TIMESTAMP DEFAULT CURRENT_TIMESTAMP","updated_at":"DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP","username":"varchar(262)","aaa":"varchar(635)","dfde":"varchar(37)","dfc":"varchar(77)","query":"varchar(34)"}}

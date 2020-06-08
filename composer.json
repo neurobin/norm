@@ -1,6 +1,6 @@
 {
     "name": "neurobin/norm",
-    "description": "Database utils",
+    "description": "A simple ORM that is so minimalistic that it can be called a No ORM or Normal ORM.",
     "type": "library",
     "license": "BSD",
     "authors": [
@@ -9,5 +9,9 @@
             "email": "jahidulhamid@yahoo.com"
         }
     ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {"Norm\\": "src/"}
+    },
     "require": {}
 }
