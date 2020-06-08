@@ -8,6 +8,8 @@ define('DB_NAME', 'test');
 define('DB_CHARSET', 'utf8');
 require_once 'DB.php';
 
+use Norm\DB;
+
 
 $d = DB::make_query("SHOW TABLES;");
 
