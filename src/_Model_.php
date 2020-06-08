@@ -153,9 +153,11 @@ abstract class _Model_{
             self::_save_migration_current_($json);
             return $qobj;
         }
-        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        echo "=== This is a dry run, no changes will be applied ===\n";
-        echo "=====================================================\n";
+        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+        echo "=== This is a dry run, no changes will be applied. ===\n";
+        echo "=== You must pass a positional argument 'apply'    ===\n";
+        echo "=== to apply the migration.                        ===\n";
+        echo "======================================================\n";
     }
 
     public static function _get_sql_drop_(){
@@ -326,9 +328,11 @@ abstract class _Model_{
             self::_save_migration_current_($json);
             return $qobj;
         }
-        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        echo "=== This is a dry run, no changes will be applied ===\n";
-        echo "=====================================================\n";
+        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+        echo "=== This is a dry run, no changes will be applied. ===\n";
+        echo "=== You must pass a positional argument 'apply'    ===\n";
+        echo "=== to apply the migration.                        ===\n";
+        echo "======================================================\n";
     }
 
     public static function _change_or_create_($apply){
