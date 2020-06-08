@@ -48,14 +48,45 @@ if(!empty($argv[1]) && $argv[1] == 'apply'){
     $apply = false;
 }
 
+$msg = "
+Type a command to specify what you want to do:
+    yes     I want to apply this migration
+    none    I do not want to apply any migration.
+    all     I want to apply all migrations (Dangerous action).
+
+Just hit enter without typing anything to not apply migration for this
+model.
+";
 // The native migration runner
 foreach($migrate_native as $class){
     Migrate::run($class, $apply);
+    if(!$apply){
+        echo $msg;
+        $ans = readline("Command: ");
+        readline_add_history($ans);
+        if($ans == 'yes' || $ans == 'all'){
+            Migrate::run($class, true);
+            if($ans == 'all'){
+                $apply = true;
+            }
+        }
+    }
 }
 
 // The alien migration runner
 foreach($migrate_alien as $class){
     Migrate::run_alien($class, $apply);
+    if(!$apply){
+        echo $msg;
+        $ans = readline("Command: ");
+        readline_add_history($ans);
+        if($ans == 'yes' || $ans == 'all'){
+            Migrate::run_alien($class, true);
+            if($ans == 'all'){
+                $apply = true;
+            }
+        }
+    }
 }
 
 ################################################################################
