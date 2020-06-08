@@ -5,9 +5,9 @@ require 'db_config.php';
 require 'models.php';
 
 use models\User;
-use Norm\DB;
+use Norm\_DB_;
 
-$d = DB::make_query('SHOW TABLES');
+$d = DB::create_connection();
 
 var_dump($d);
 

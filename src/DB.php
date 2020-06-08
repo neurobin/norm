@@ -17,11 +17,17 @@ class _DB_{
         $this->db_user = $db_user;
         $this->db_password = $db_password;
         $this->attrs = $attrs;
-        $this->create_new_pdo();
+        $this->create_connection();
+    }
+
+    public function create_connection(){
+        if($this->pdo_instance === null){
+            $this->create_new_pdo();
+        }
     }
 
     public function create_new_pdo(){
-        $this->pdo_instance = new PDO($this->dsn, $this->db_user, $this->db_password, $this->attrs);
+            $this->pdo_instance = new PDO($this->dsn, $this->db_user, $this->db_password, $this->attrs);
     }
 
     public function close_connection(){
@@ -47,22 +53,22 @@ class _DB_{
         if(empty($attrs)) return array();
         $previous_attrs = $this->attrs;
         foreach($arr as $k=>$v){
-            try{
+            // try{
                 $this->pdo_instance->setAttribute($k, $v);
-                $this->attrs = $arr;
-            }catch(PDOException $e){
-                $emsg = $e->getMessage();
-                if(strpos($emsg, 'server has gone away') !== false ||
-                   strpos($emsg, 'server closed the connection') !== false){
-                    $this->create_new_pdo();
-                    $this->pdo_instance->setAttribute($k, $v); // do this separately
-                    // so that attrs does not change on failure
-                    $this->attrs = $arr;
-                }else{
-                    throw $e;
-                }
-            }
+            // }catch(PDOException $e){
+            //     $emsg = $e->getMessage();
+            //     if(strpos($emsg, 'server has gone away') !== false ||
+            //        strpos($emsg, 'server closed the connection') !== false){
+            //         $this->create_new_pdo();
+            //         $this->pdo_instance->setAttribute($k, $v); // do this separately
+            //         // so that attrs does not change on failure
+            //         $this->attrs = $arr;
+            //     }else{
+            //         throw $e;
+            //     }
+            // }
         }
+        $this->attrs = $arr;
         return $previous_attrs;
     }
 
