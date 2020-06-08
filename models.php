@@ -6,7 +6,7 @@ class Users extends MysqlBase{
 
     public static $_col_username = 'varchar(262)';
     public static $_col_password = 'varchar(255)';
-    public static $_col_email = 'varchar(255)';
+    public static $_col_email_id = 'varchar(255)';
 
     //default values that will be used in PHP object mapping.
     //These won't change the db schema. If you want to set default values to
@@ -21,7 +21,7 @@ class UserProfile extends MysqlBase{
     public static $_col_last_name = 'varchar(255)';
     public static $_col_address = 'varchar(255)';
     public static $_col_hobby_description = 'text';
-    public static $_col_phone = 'varchar(35)';
+    public static $_col_phone_number = 'varchar(35)';
     public static $_col_work_address = 'varchar(300)';
 
 

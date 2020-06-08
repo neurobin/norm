@@ -148,16 +148,16 @@ abstract class _Model_{
          * Create a table for the model.
          */
         [$sql, $json] = static::_get_sql_create_();
+        if(empty($sql)) return FALSE;
         if($apply){
             $qobj = static::_make_query_($sql);
             self::_save_migration_current_($json);
             return $qobj;
         }
-        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        echo "=== This is a dry run, no changes will be applied. ===\n";
-        echo "=== You must pass a positional argument 'apply'    ===\n";
-        echo "=== to apply the migration.                        ===\n";
-        echo "======================================================\n";
+        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+        echo "=== This was a dry run, no changes were applied. ===\n";
+        echo "====================================================\n";
+        return TRUE;
     }
 
     public static function _get_sql_drop_(){
@@ -328,11 +328,10 @@ abstract class _Model_{
             self::_save_migration_current_($json);
             return $qobj;
         }
-        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        echo "=== This is a dry run, no changes will be applied. ===\n";
-        echo "=== You must pass a positional argument 'apply'    ===\n";
-        echo "=== to apply the migration.                        ===\n";
-        echo "======================================================\n";
+        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+        echo "=== This was a dry run, no changes were applied. ===\n";
+        echo "====================================================\n";
+        return TRUE;
     }
 
     public static function _change_or_create_($apply){
@@ -340,9 +339,9 @@ abstract class _Model_{
          * Detect and apply changes to a model if previous migration exists, otherwise create a new one.
          */
         try {
-            static::_change_($apply);
+            return static::_change_($apply);
         } catch(TableNotCreatedException $e){
-            static::_create_($apply);
+            return static::_create_($apply);
         }
     }
 

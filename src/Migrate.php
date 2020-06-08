@@ -3,7 +3,7 @@
 class Migrate{
 
     public static function run($class, $apply=false){
-        $class::_change_or_create_($apply);
+        return $class::_change_or_create_($apply);
     }
 
     public static function run_alien($class, $apply=false){
@@ -14,7 +14,7 @@ class Migrate{
         }else{
             //no-op;
         }
-        $class::_change_($apply);
+        return $class::_change_($apply);
     }
 
 }
