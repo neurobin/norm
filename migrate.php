@@ -42,14 +42,20 @@ $migrate_alien = [
 ########################## Migration runners ###################################
 ################################################################################
 
+if(!empty($argv[1]) && $argv[1] == 'apply'){
+    $apply = true;
+}else{
+    $apply = false;
+}
+
 // The native migration runner
 foreach($migrate_native as $class){
-    Migrate::run($class);
+    Migrate::run($class, $apply);
 }
 
 // The alien migration runner
 foreach($migrate_alien as $class){
-    Migrate::run_alien($class);
+    Migrate::run_alien($class, $apply);
 }
 
 ################################################################################

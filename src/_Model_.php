@@ -143,14 +143,19 @@ abstract class _Model_{
         return [$sql, $json];
     }
 
-    public static function _create_(){
+    public static function _create_($apply){
         /**
          * Create a table for the model.
          */
         [$sql, $json] = static::_get_sql_create_();
-        $qobj = static::_make_query_($sql);
-        self::_save_migration_current_($json);
-        return $qobj;
+        if($apply){
+            $qobj = static::_make_query_($sql);
+            self::_save_migration_current_($json);
+            return $qobj;
+        }
+        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+        echo "=== This is a dry run, no changes will be applied ===\n";
+        echo "=====================================================\n";
     }
 
     public static function _get_sql_drop_(){
@@ -310,25 +315,30 @@ abstract class _Model_{
         return [$sql, $new_json];
     }
 
-    public static function _change_(){
+    public static function _change_($apply){
         /**
          * Detect and apply changes to a model.
          */
         [$sql, $json] = static::_get_sql_change_();
         if(empty($sql)) return FALSE;
-        $qobj = static::_make_query_($sql);
-        self::_save_migration_current_($json);
-        return $qobj;
+        if($apply){
+            $qobj = static::_make_query_($sql);
+            self::_save_migration_current_($json);
+            return $qobj;
+        }
+        echo "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+        echo "=== This is a dry run, no changes will be applied ===\n";
+        echo "=====================================================\n";
     }
 
-    public static function _change_or_create_(){
+    public static function _change_or_create_($apply){
         /**
          * Detect and apply changes to a model if previous migration exists, otherwise create a new one.
          */
         try {
-            static::_change_();
+            static::_change_($apply);
         } catch(TableNotCreatedException $e){
-            static::_create_();
+            static::_create_($apply);
         }
     }
 
