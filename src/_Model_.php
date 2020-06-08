@@ -181,6 +181,8 @@ abstract class _Model_{
     }
 
     public static function _get_changed_props_($curs, $pres){ # no override
+        // var_dump($curs);
+        // var_dump($pres);
         $ops = [];
         while(($cur=each($curs)) | ($pre=each($pres))){
 
