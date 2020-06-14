@@ -194,7 +194,7 @@ abstract class _Model_{
         return TRUE;
     }
 
-    public static function _get_sql_drop_(){
+    public static function _get_sql_drop_($apply){
         /**
          * Get sql to delete the table.
          */
@@ -202,14 +202,19 @@ abstract class _Model_{
         return $sql;
     }
 
-    public static function _drop_(){
+    public static function _drop_($apply, $confirm='no'){
         /**
          * Delete the table. Dangerous action. You must not use this unless you know what you
          * are doing.
          */
-        $qobj = static::_make_query_(static::_get_sql_drop_());
-        self::_save_migration_current_('');
-        return $qobj;
+        $sql = static::_get_sql_drop_($apply);
+        if(empty($sql)) return FALSE;
+        if($apply && $confirm === 'yes'){
+            $qobj = static::_make_query_($sql);
+            self::_save_migration_current_('');
+            return $qobj;
+        }
+        return TRUE;
     }
 
     public static function _get_sql_schema_(){

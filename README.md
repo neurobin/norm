@@ -16,7 +16,7 @@ The goal is to support all databases supported by PDO. But currently, it is only
 
 To write a model, you need to inherit from `Norm\Model` class. This model provides a default 'id' column for the primary key.
 
-If you are working with `mysql`, you can inherit from `Norm\MysqlBase`. This one provides two additional columns: `created_at` and `updated_at`. Of course, you can make your own base models and inherit from them if you wish. In that case, the base models must inherit from `Norm\Model`.
+If you are working with `mysql`, you can inherit from `Norm\MysqlBase`. This one provides two additional columns: `created_at` and `updated_at`. Of course, you can make your own base models and inherit from them if you wish.
 
 For a property `username`, you will define its schema as `$_col_username = 'varchar(65)'` and the default value as `$_dfl_username = 'John Doe'`.
 
@@ -230,3 +230,10 @@ Just hit enter to not apply migration for this model.
 
 Type a command:
 ```
+
+
+# Customizations
+
+* Table name: Define `public static function _get_table_name_()` in your model that returns the table name as string.
+* Migration directory: Define `public static function _get_migration_dir_()` in your model and return the dir path as string. Path must **not** contain `/` at end.
+* Migration base dir: Define `public static $_migration_base_dir_` in your model. It is ignored if a custom `_get_migration_dir_()` is used.
