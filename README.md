@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/neurobin/norm.svg?branch=release)](https://travis-ci.org/neurobin/norm)
-
 A simple ORM built for speedy development. It comes with a migration tool and it uses PDO for communicating with databases. It does not do much abstraction like other ORMs and you will find that you are running SQL queries with PDO, except, it's easier than running those queries with PDO directly.
 
 Also, you can not make spelling mistakes such as 'userrname' when your database schema is defined with correct spelling 'username'. It will warn you immediately where you make this mistake before doing anything with that misspelled model property.
